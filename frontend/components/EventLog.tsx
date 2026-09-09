@@ -1,22 +1,51 @@
-"use client";
-
-type EventItem = {
-  type: string;
-  timestamp: string;
-  data: Record<string, unknown>;
-};
+import { MachineEvent } from "@/lib/websocket";
 
 type EventLogProps = {
-  events: EventItem[];
+  events: MachineEvent[];
 };
 
-function formatEvent(event: EventItem) {
+function formatTime(
+  timestamp: string | null,
+) {
+  if (!timestamp) {
+    return "--:--:--";
+  }
+
+  const date =
+    new Date(timestamp);
+
+  if (
+    Number.isNaN(
+      date.getTime(),
+    )
+  ) {
+    return "--:--:--";
+  }
+
+  return date.toLocaleTimeString(
+    [],
+    {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    },
+  );
+}
+
+function describeEvent(
+  event: MachineEvent,
+) {
   switch (event.type) {
     case "digit_computed":
-      return `DIGIT ${event.data.position} COMPUTED: ${event.data.digit}`;
+      return `DIGIT ${
+        event.data.position ?? "?"
+      } → ${event.data.digit ?? "?"}`;
 
     case "digits_erased":
-      return `${event.data.count} DIGITS INVALIDATED`;
+      return `${
+        event.data.count ?? "?"
+      } DIGIT(S) DISCARDED`;
 
     case "hostility_detected":
       return "HOSTILE INPUT DETECTED";
@@ -27,14 +56,22 @@ function formatEvent(event: EventItem) {
     case "computation_paused":
       return "COMPUTATION PAUSED";
 
+    case "computation_resumed":
+      return "COMPUTATION RESUMED";
+
     default:
-      return event.type.toUpperCase();
+      return event.type
+        .replaceAll("_", " ")
+        .toUpperCase();
   }
 }
 
 export default function EventLog({
   events,
 }: EventLogProps) {
+  const visibleEvents =
+    [...events].reverse();
+
   return (
     <section className="event-log">
       <div className="section-heading">
@@ -42,30 +79,32 @@ export default function EventLog({
       </div>
 
       <div className="event-list">
-        {events.length === 0 ? (
+        {visibleEvents.length ===
+        0 ? (
           <div className="event-empty">
-            AWAITING MACHINE ACTIVITY...
+            NO EVENTS RECORDED.
           </div>
         ) : (
-          events
-            .slice()
-            .reverse()
-            .map((event, index) => (
+          visibleEvents.map(
+            (event, index) => (
               <div
                 className="event"
                 key={`${event.timestamp}-${index}`}
               >
                 <span className="event-time">
-                  {new Date(
+                  {formatTime(
                     event.timestamp,
-                  ).toLocaleTimeString()}
+                  )}
                 </span>
 
                 <span className="event-message">
-                  {formatEvent(event)}
+                  {describeEvent(
+                    event,
+                  )}
                 </span>
               </div>
-            ))
+            ),
+          )
         )}
       </div>
     </section>

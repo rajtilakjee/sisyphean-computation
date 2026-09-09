@@ -58,7 +58,7 @@ class Machine:
     async def _computation_loop(self):
         while self.is_running:
             await self.compute(1)
-            await asyncio.sleep(0.15)
+            await asyncio.sleep(0.75)
 
     async def compute(self, digits: int) -> str:
         if digits <= 0:

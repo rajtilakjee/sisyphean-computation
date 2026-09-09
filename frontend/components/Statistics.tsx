@@ -15,7 +15,7 @@ export default function Statistics({
     <section className="statistics">
       <div className="stat">
         <span className="stat-label">
-          RETAINED WORK
+          RETAINED
         </span>
 
         <span className="stat-value">
@@ -37,13 +37,13 @@ export default function Statistics({
         </span>
 
         <span className="stat-unit">
-          DIGITS
+          COMPUTED
         </span>
       </div>
 
       <div className="stat">
         <span className="stat-label">
-          WORK DISCARDED
+          DISCARDED
         </span>
 
         <span className="stat-value">

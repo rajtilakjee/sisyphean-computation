@@ -12,21 +12,22 @@ export default function MachineStatus({
       <div className="status-indicator">
         <span
           className={`status-dot ${
-            connected ? "online" : "offline"
+            connected ? "online" : ""
           }`}
         />
+
         <span>
           {connected
-            ? "MACHINE CONNECTED"
-            : "CONNECTION LOST"}
+            ? "MACHINE LINK ESTABLISHED"
+            : "MACHINE LINK OFFLINE"}
         </span>
       </div>
 
-      <div className="status-state">
+      <span className="status-state">
         {running
-          ? "COMPUTATION IN PROGRESS"
+          ? "COMPUTATION RUNNING"
           : "COMPUTATION PAUSED"}
-      </div>
+      </span>
     </div>
   );
 }

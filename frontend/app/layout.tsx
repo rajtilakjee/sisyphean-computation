@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Sisyphean Computation",
-  description: "An interactive computational artwork about machine labor.",
+  description:
+    "An interactive computational artwork about machine labor.",
 };
 
 export default function RootLayout({

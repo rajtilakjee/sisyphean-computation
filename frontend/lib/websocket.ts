@@ -8,34 +8,22 @@ export type MachineState = {
   connected_clients?: number;
 };
 
-export type MachineEventType =
-  | "digit_computed"
-  | "digits_erased"
-  | "computation_started"
-  | "computation_paused"
-  | "computation_resumed"
-  | "hostility_detected";
-
 export type MachineEvent = {
-  type: MachineEventType;
-  timestamp: string;
+  type: string;
+  timestamp: string | null;
   data: Record<string, unknown>;
 };
 
-export type MachineStateMessage = {
-  type: "state";
-  timestamp: null;
-  data: MachineState;
-};
-
 export type MachineMessage =
-  | MachineEvent
-  | MachineStateMessage;
+  MachineEvent;
 
-const WS_URL = "ws://127.0.0.1:8000/ws";
+const WS_URL =
+  "ws://127.0.0.1:8000/ws";
 
 export function createMachineSocket(
-  onMessage: (message: MachineMessage) => void,
+  onMessage: (
+    message: MachineMessage,
+  ) => void,
   onOpen?: () => void,
   onClose?: () => void,
 ) {
@@ -44,7 +32,8 @@ export function createMachineSocket(
     WS_URL,
   );
 
-  const socket = new WebSocket(WS_URL);
+  const socket =
+    new WebSocket(WS_URL);
 
   socket.onopen = () => {
     console.log(
@@ -61,9 +50,10 @@ export function createMachineSocket(
     );
 
     try {
-      const message = JSON.parse(
-        event.data,
-      ) as MachineMessage;
+      const message =
+        JSON.parse(
+          event.data,
+        ) as MachineMessage;
 
       onMessage(message);
     } catch (error) {
@@ -80,7 +70,8 @@ export function createMachineSocket(
       {
         code: event.code,
         reason: event.reason,
-        wasClean: event.wasClean,
+        wasClean:
+          event.wasClean,
       },
     );
 

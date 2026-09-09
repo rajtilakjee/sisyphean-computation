@@ -2,38 +2,70 @@
 
 import {
   FormEvent,
+  KeyboardEvent,
   useState,
 } from "react";
 
 type HumanInputProps = {
-  onSubmit: (message: string) => Promise<void>;
+  onSubmit: (
+    message: string,
+  ) => Promise<void>;
 };
 
 export default function HumanInput({
   onSubmit,
 }: HumanInputProps) {
-  const [message, setMessage] = useState("");
+  const [message, setMessage] =
+    useState("");
+
   const [submitting, setSubmitting] =
     useState(false);
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
-    event.preventDefault();
+  const [error, setError] =
+    useState<string | null>(null);
 
-    const trimmed = message.trim();
+  async function submit() {
+    const trimmed =
+      message.trim();
 
     if (!trimmed || submitting) {
       return;
     }
 
     setSubmitting(true);
+    setError(null);
 
     try {
       await onSubmit(trimmed);
+
       setMessage("");
+    } catch {
+      setError(
+        "INTERVENTION FAILED",
+      );
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleSubmit(
+    event: FormEvent,
+  ) {
+    event.preventDefault();
+
+    await submit();
+  }
+
+  function handleKeyDown(
+    event: KeyboardEvent<HTMLTextAreaElement>,
+  ) {
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey
+    ) {
+      event.preventDefault();
+
+      void submit();
     }
   }
 
@@ -47,34 +79,37 @@ export default function HumanInput({
         Address the machine.
       </p>
 
-      <form onSubmit={handleSubmit}>
+      <form
+        onSubmit={handleSubmit}
+      >
         <textarea
           value={message}
-          onChange={(event) =>
-            setMessage(event.target.value)
-          }
+          onChange={(event) => {
+            setMessage(
+              event.target.value,
+            );
+
+            if (error) {
+              setError(null);
+            }
+          }}
+          onKeyDown={handleKeyDown}
           placeholder="Enter a message..."
           maxLength={1000}
-          rows={3}
           disabled={submitting}
+          rows={2}
+          aria-label="Message the machine"
         />
 
         <div className="input-footer">
           <span>
-            {message.length} / 1000
+            {error ??
+              "ENTER TO SUBMIT / SHIFT+ENTER FOR NEWLINE"}
           </span>
 
-          <button
-            type="submit"
-            disabled={
-              submitting ||
-              !message.trim()
-            }
-          >
-            {submitting
-              ? "PROCESSING..."
-              : "SUBMIT"}
-          </button>
+          <span>
+            {message.length}/1000
+          </span>
         </div>
       </form>
     </section>

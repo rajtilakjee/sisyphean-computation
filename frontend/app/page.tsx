@@ -58,72 +58,73 @@ export default function Home() {
         );
       });
 
-    socket = createMachineSocket(
-      (message) => {
-        if (message.type === "state") {
-          setState(
-            message.data as unknown as MachineState,
-          );
+    const connectTimer = window.setTimeout(() => {
+      socket = createMachineSocket(
+        (message) => {
+          if (message.type === "state") {
+            setState(message.data);
 
-          return;
-        }
+            return;
+          }
 
-        setEvents((current) => [
-          ...current.slice(-99),
-          message,
-        ]);
+          setEvents((current) => [
+            ...current.slice(-99),
+            message,
+          ]);
 
-        if (message.type === "digit_computed") {
-          setState((current) => ({
-            ...current,
-            pi:
-              current.pi +
-              String(message.data.digit),
-            computed_digits:
-              current.computed_digits + 1,
-            total_digits_computed:
-              current.total_digits_computed + 1,
-          }));
-        }
+          if (message.type === "digit_computed") {
+            setState((current) => ({
+              ...current,
+              pi:
+                current.pi +
+                String(message.data.digit),
+              computed_digits:
+                current.computed_digits + 1,
+              total_digits_computed:
+                current.total_digits_computed + 1,
+            }));
+          }
 
-        if (message.type === "digits_erased") {
-          const count = Number(
-            message.data.count ?? 0,
-          );
+          if (message.type === "digits_erased") {
+            const count = Number(
+              message.data.count ?? 0,
+            );
 
-          setState((current) => ({
-            ...current,
-            pi: current.pi.slice(
-              0,
-              -count,
-            ),
-            computed_digits:
-              current.computed_digits - count,
-            erased_digits:
-              current.erased_digits + count,
-            repeated_computations:
-              current.repeated_computations + 1,
-          }));
+            setState((current) => ({
+              ...current,
+              pi: current.pi.slice(
+                0,
+                -count,
+              ),
+              computed_digits:
+                current.computed_digits - count,
+              erased_digits:
+                current.erased_digits + count,
+              repeated_computations:
+                current.repeated_computations + 1,
+            }));
 
-          setErased(true);
+            setErased(true);
 
-          window.setTimeout(
-            () => setErased(false),
-            500,
-          );
-        }
-      },
-      () => {
-        setConnected(true);
-      },
-      () => {
-        setConnected(false);
-      },
-    );
+            window.setTimeout(
+              () => setErased(false),
+              500,
+            );
+          }
+        },
+        () => {
+          setConnected(true);
+        },
+        () => {
+          setConnected(false);
+        },
+      );
 
-    socketRef.current = socket;
+      socketRef.current = socket;
+    }, 0);
 
     return () => {
+      window.clearTimeout(connectTimer);
       socket?.close();
       socketRef.current = null;
     };

@@ -34,6 +34,7 @@ app = FastAPI(
     title="Sisyphean Computation",
     description="An interactive computational artwork about machine labor.",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(

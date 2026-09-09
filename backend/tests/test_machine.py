@@ -16,6 +16,16 @@ async def test_machine_computes_pi():
 
 
 @pytest.mark.anyio
+async def test_machine_computes_pi_incrementally():
+    machine = Machine()
+
+    for _ in range(20):
+        await machine.compute(1)
+
+    assert machine.pi == "3.14159265358979323846"
+
+
+@pytest.mark.anyio
 async def test_machine_can_erase_digits():
     machine = Machine()
 

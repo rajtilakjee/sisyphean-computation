@@ -2,9 +2,6 @@ from decimal import Decimal, getcontext
 from math import factorial
 
 
-C = 426880 * Decimal(10005).sqrt()
-
-
 def compute_pi(digits: int) -> str:
     """
     Compute pi to the requested number of decimal digits
@@ -16,6 +13,7 @@ def compute_pi(digits: int) -> str:
 
     # Extra precision prevents intermediate rounding errors.
     getcontext().prec = digits + 20
+    constant = Decimal(426880) * Decimal(10005).sqrt()
 
     total = Decimal(0)
 
@@ -42,6 +40,7 @@ def compute_pi(digits: int) -> str:
 
         k += 1
 
-    pi = C / total
+    pi = format(constant / total, "f")
+    integer, fractional = pi.split(".")
 
-    return format(pi, f".{digits}f")
+    return f"{integer}.{fractional[:digits]}"

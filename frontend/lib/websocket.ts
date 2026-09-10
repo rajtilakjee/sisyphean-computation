@@ -18,7 +18,8 @@ export type MachineMessage =
   MachineEvent;
 
 const WS_URL =
-  process.env.NEXT_PUBLIC_WS_URL;
+  process.env.NEXT_PUBLIC_WS_URL ||
+  "ws://127.0.0.1:8000/ws";
 
 export function createMachineSocket(
   onMessage: (

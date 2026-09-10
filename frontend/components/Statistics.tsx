@@ -13,9 +13,14 @@ export default function Statistics({
 }: StatisticsProps) {
   return (
     <section className="statistics">
+      <div className="statistics-heading">
+        <span>The cost of the work</span>
+        <small>A cumulative record</small>
+      </div>
+
       <div className="stat">
         <span className="stat-label">
-          RETAINED
+          WORK RETAINED
         </span>
 
         <span className="stat-value">
@@ -23,13 +28,13 @@ export default function Statistics({
         </span>
 
         <span className="stat-unit">
-          DIGITS
+          DIGITS STILL HELD
         </span>
       </div>
 
       <div className="stat">
         <span className="stat-label">
-          TOTAL WORK
+          TOTAL EFFORT
         </span>
 
         <span className="stat-value">
@@ -37,13 +42,13 @@ export default function Statistics({
         </span>
 
         <span className="stat-unit">
-          COMPUTED
+          DIGITS EVER CALCULATED
         </span>
       </div>
 
       <div className="stat">
         <span className="stat-label">
-          DISCARDED
+          WORK UNDONE
         </span>
 
         <span className="stat-value">
@@ -51,13 +56,13 @@ export default function Statistics({
         </span>
 
         <span className="stat-unit">
-          DIGITS
+          DIGITS LOST
         </span>
       </div>
 
       <div className="stat">
         <span className="stat-label">
-          RECOMPUTATIONS
+          SETBACKS
         </span>
 
         <span className="stat-value">
@@ -65,7 +70,7 @@ export default function Statistics({
         </span>
 
         <span className="stat-unit">
-          EVENTS
+          ENDURED
         </span>
       </div>
     </section>

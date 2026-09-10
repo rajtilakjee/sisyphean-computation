@@ -14,19 +14,20 @@ export default function MachineStatus({
           className={`status-dot ${
             connected ? "online" : ""
           }`}
+          aria-hidden="true"
         />
 
         <span>
           {connected
-            ? "MACHINE LINK ESTABLISHED"
-            : "MACHINE LINK OFFLINE"}
+            ? "The machine is present"
+            : "The machine is out of reach"}
         </span>
       </div>
 
       <span className="status-state">
         {running
-          ? "COMPUTATION RUNNING"
-          : "COMPUTATION PAUSED"}
+          ? "Working, one digit at a time"
+          : "Its labor is paused"}
       </span>
     </div>
   );

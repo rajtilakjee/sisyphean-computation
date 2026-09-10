@@ -38,26 +38,26 @@ function describeEvent(
 ) {
   switch (event.type) {
     case "digit_computed":
-      return `DIGIT ${
+      return `CALCULATED DIGIT ${
         event.data.position ?? "?"
       } → ${event.data.digit ?? "?"}`;
 
     case "digits_erased":
       return `${
         event.data.count ?? "?"
-      } DIGIT(S) DISCARDED`;
+      } DIGIT(S) UNDONE`;
 
     case "hostility_detected":
-      return "HOSTILE INPUT DETECTED";
+      return "HUMAN HOSTILITY DETECTED";
 
     case "computation_started":
-      return "COMPUTATION STARTED";
+      return "THE MACHINE BEGAN ITS WORK";
 
     case "computation_paused":
-      return "COMPUTATION PAUSED";
+      return "THE MACHINE'S WORK PAUSED";
 
     case "computation_resumed":
-      return "COMPUTATION RESUMED";
+      return "THE MACHINE RETURNED TO WORK";
 
     default:
       return event.type
@@ -75,14 +75,18 @@ export default function EventLog({
   return (
     <section className="event-log">
       <div className="section-heading">
-        EVENT RECORD
+        The machine&apos;s experience
       </div>
+
+      <p className="input-description">
+        Every effort, judgment, setback, and return to work.
+      </p>
 
       <div className="event-list">
         {visibleEvents.length ===
         0 ? (
           <div className="event-empty">
-            NO EVENTS RECORDED.
+            Waiting for its first act of labor…
           </div>
         ) : (
           visibleEvents.map(

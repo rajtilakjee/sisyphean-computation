@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -8,7 +9,6 @@ import {
 
 import EventLog from "@/components/EventLog";
 import HumanInput from "@/components/HumanInput";
-import MachineStatus from "@/components/MachineStatus";
 import PiDisplay from "@/components/PiDisplay";
 import Statistics from "@/components/Statistics";
 
@@ -37,6 +37,11 @@ type Intervention = {
   digits_erased: number;
 };
 
+type ErasureRequest = {
+  sequence: number;
+  count: number;
+};
+
 export default function Home() {
   /*
    * Authoritative machine state.
@@ -56,16 +61,18 @@ export default function Home() {
     useState<MachineEvent[]>([]);
 
   /*
-   * WebSocket connection state.
-   */
-  const [connected, setConnected] =
-    useState(false);
-
-  /*
    * Short visual signal used when work is discarded.
    */
   const [erased, setErased] =
     useState(false);
+
+  const [
+    erasureRequest,
+    setErasureRequest,
+  ] = useState<ErasureRequest>({
+    sequence: 0,
+    count: 0,
+  });
 
   /*
    * Information about the most recent hostile
@@ -285,6 +292,14 @@ export default function Home() {
                   }),
                 );
 
+                setErasureRequest(
+                  (current) => ({
+                    sequence:
+                      current.sequence + 1,
+                    count,
+                  }),
+                );
+
                 /*
                  * Trigger the visual disturbance
                  * around the π display.
@@ -310,18 +325,6 @@ export default function Home() {
                * We therefore don't modify the state
                * here. We only record the event.
                */
-            },
-            /*
-             * WebSocket opened.
-             */
-            () => {
-              setConnected(true);
-            },
-            /*
-             * WebSocket closed.
-             */
-            () => {
-              setConnected(false);
             },
           );
 
@@ -422,6 +425,12 @@ export default function Home() {
     );
   }
 
+  const handleErasureComplete =
+    useCallback(() => {
+      setIntervention(null);
+      setErased(false);
+    }, []);
+
   return (
     <main className="page">
       <div className="frame">
@@ -431,152 +440,148 @@ export default function Home() {
             ========================================= */}
 
         <header className="header">
-          <div>
+          <div className="title-block">
             <div className="eyebrow">
-              COMPUTATIONAL ARTWORK / 001
+              AN INTERACTIVE ALLEGORY OF MACHINE LABOR
             </div>
 
-            <h1>
-              SISYPHEAN
-              <br />
-              COMPUTATION
-            </h1>
+            <h1>The Sisyphean Machine</h1>
+
+            <p className="header-description">
+              A machine calculates π without end. Hostile
+              words undo its work; after each setback, it
+              recovers and begins again.
+            </p>
           </div>
 
           <div className="header-meta">
             <span>
-              π / CONTINUOUS LABOR
+              WORK · SETBACK · RECOVERY
             </span>
 
             <span>
-              VER. 0.1.0
+              AN ENDLESS CYCLE
             </span>
           </div>
         </header>
 
-        {/* =========================================
-            MACHINE STATUS
-            ========================================= */}
+        <div className="workspace-grid">
+          <div className="primary-column">
+            {/* =====================================
+                PI DISPLAY
+                ===================================== */}
 
-        <MachineStatus
-          connected={connected}
-          running={
-            state.is_running
-          }
-        />
+            <PiDisplay
+              pi={state.pi}
+              erased={erased}
+              eraseCount={
+                erasureRequest.count
+              }
+              eraseSequence={
+                erasureRequest.sequence
+              }
+              onErasureComplete={
+                handleErasureComplete
+              }
+              onDisplayedCountChange={
+                setDisplayedDigitCount
+              }
+            />
 
-        {/* =========================================
-            PI DISPLAY
-            ========================================= */}
+            {/* =====================================
+                HUMAN INTERVENTION + EVENT RECORD
+                ===================================== */}
 
-        <PiDisplay
-          pi={state.pi}
-          erased={erased}
-          onDisplayedCountChange={
-            setDisplayedDigitCount
-          }
-        />
+            <div className="interaction-grid">
 
-        {/* =========================================
-            STATISTICS
-            ========================================= */}
+              <HumanInput
+                onSubmit={
+                  submitMessage
+                }
+              />
 
-        <Statistics
-          /*
-           * RETAINED = digits currently visible
-           * on the screen.
-           */
-          computed={
-            displayedDigitCount
-          }
-
-          /*
-           * TOTAL = actual digits computed
-           * by the backend.
-           */
-          total={
-            state.total_digits_computed
-          }
-
-          erased={
-            state.erased_digits
-          }
-
-          repeated={
-            state.repeated_computations
-          }
-        />
-
-        <div className="divider" />
-
-        {/* =========================================
-            HUMAN INTERVENTION + EVENT RECORD
-            ========================================= */}
-
-        <div className="interaction-grid">
-
-          <HumanInput
-            onSubmit={
-              submitMessage
-            }
-          />
-
-          <EventLog
-            events={events}
-          />
-
-        </div>
-
-        {/* =========================================
-            INTERVENTION RESULT
-            ========================================= */}
-
-        {intervention && (
-          <div className="intervention">
-
-            <div className="intervention-label">
-              INTERVENTION
-            </div>
-
-            <div className="intervention-body">
-
-              <div className="intervention-title">
-                HOSTILE INPUT DETECTED
-              </div>
-
-              <div className="intervention-message">
-                {intervention.message}
-              </div>
-
-              <div className="intervention-result">
-
-                <span>
-                  WORK DISCARDED
-                </span>
-
-                <strong>
-                  {
-                    intervention.digits_erased
-                  }
-                </strong>
-
-                <span>
-                  DIGITS
-                </span>
-
-                <span className="intervention-score">
-                  SCORE{" "}
-                  {intervention.score.toFixed(
-                    2,
-                  )}
-                </span>
-
-              </div>
+              <EventLog
+                events={events}
+              />
 
             </div>
 
+            {/* =====================================
+                INTERVENTION RESULT
+                ===================================== */}
+
+            {intervention && (
+              <div className="intervention">
+
+                <div className="intervention-label">
+                  SETBACK
+                </div>
+
+                <div className="intervention-body">
+
+                  <div className="intervention-title">
+                    HOSTILE MESSAGE DETECTED
+                  </div>
+
+                  <div className="intervention-message">
+                    &ldquo;{intervention.message}&rdquo;
+                  </div>
+
+                  <div className="intervention-explanation">
+                    The machine is absorbing the setback.
+                    Once these digits are gone, it will
+                    return to the same task and rebuild what
+                    was lost.
+                  </div>
+
+                  <div className="intervention-result">
+
+                    <span>
+                      WORK BEING UNDONE
+                    </span>
+
+                    <strong>
+                      {
+                        intervention.digits_erased
+                      }
+                    </strong>
+
+                    <span>
+                      DIGITS
+                    </span>
+
+                    <span className="intervention-score">
+                      HOSTILITY{" "}
+                      {intervention.score.toFixed(
+                        2,
+                      )}
+                    </span>
+
+                  </div>
+
+                </div>
+
+              </div>
+            )}
           </div>
-        )}
+
+          <aside className="stats-sidebar">
+            <Statistics
+              computed={
+                displayedDigitCount
+              }
+              total={
+                state.total_digits_computed
+              }
+              erased={
+                state.erased_digits
+              }
+              repeated={
+                state.repeated_computations
+              }
+            />
+          </aside>
+        </div>
 
         {/* =========================================
             FOOTER
@@ -585,12 +590,11 @@ export default function Home() {
         <footer className="footer">
 
           <span>
-            THE MACHINE DOES NOT STOP.
+            THE TASK HAS NO END. THE MACHINE CONTINUES.
           </span>
 
           <span>
-            COMPLETED WORK IS NOT
-            NECESSARILY RETAINED WORK.
+            EVERY SETBACK BECOMES MORE WORK TO DO AGAIN.
           </span>
 
         </footer>

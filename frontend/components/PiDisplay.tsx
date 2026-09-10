@@ -10,6 +10,12 @@ import {
 type PiDisplayProps = {
   pi: string;
   erased?: boolean;
+  eraseCount?: number;
+  eraseSequence?: number;
+  onErasureComplete?: () => void;
+  onDisplayedCountChange?: (
+    count: number,
+  ) => void;
 };
 
 const MAX_FONT_SIZE = 42;
@@ -21,6 +27,10 @@ const ERASE_INTERVAL = 900;
 export default function PiDisplay({
   pi,
   erased = false,
+  eraseCount = 0,
+  eraseSequence = 0,
+  onErasureComplete,
+  onDisplayedCountChange,
 }: PiDisplayProps) {
   const [displayedPi, setDisplayedPi] =
     useState(pi);
@@ -40,70 +50,48 @@ export default function PiDisplay({
   const eraseTimerRef =
     useRef<number | null>(null);
 
+  const displayedPiRef =
+    useRef(displayedPi);
+
+  const latestPiRef =
+    useRef(pi);
+
+  const erasingRef =
+    useRef(erasing);
+
+  const onErasureCompleteRef =
+    useRef(onErasureComplete);
+
+  useEffect(() => {
+    displayedPiRef.current =
+      displayedPi;
+  }, [displayedPi]);
+
+  useEffect(() => {
+    latestPiRef.current = pi;
+  }, [pi]);
+
+  useEffect(() => {
+    erasingRef.current = erasing;
+  }, [erasing]);
+
+  useEffect(() => {
+    onErasureCompleteRef.current =
+      onErasureComplete;
+  }, [onErasureComplete]);
+
   /*
-   * Synchronize newly computed digits immediately.
+   * Run each erasure as one uninterrupted phase.
+   * New backend digits can continue arriving, but they
+   * remain queued until the requested digits are gone.
    */
   useEffect(() => {
-  /*
-   * Incoming pi has grown.
-   * Display each newly computed digit separately.
-   */
-  if (pi.length > displayedPi.length) {
-    const target = pi;
-
-    /*
-     * Only start a new animation if there are
-     * actually unseen digits.
-     */
-    if (displayedPi.length >= target.length) {
+    if (
+      eraseSequence === 0 ||
+      eraseCount <= 0
+    ) {
       return;
     }
-
-    let currentLength =
-      displayedPi.length;
-
-    const interval =
-      window.setInterval(() => {
-        currentLength += 1;
-
-        setDisplayedPi(
-          target.slice(
-            0,
-            currentLength,
-          ),
-        );
-
-        if (
-          currentLength >=
-          target.length
-        ) {
-          window.clearInterval(
-            interval,
-          );
-        }
-      }, DIGIT_DISPLAY_INTERVAL);
-
-    return () => {
-      window.clearInterval(
-        interval,
-      );
-    };
-  }
-
-  /*
-   * Incoming pi has become shorter.
-   * This means the machine is discarding work.
-   */
-  if (pi.length < displayedPi.length) {
-    const digitsToErase =
-      displayedPi.length -
-      pi.length;
-
-    setErasing(true);
-    setEraseTotal(
-      digitsToErase,
-    );
-    setEraseProgress(0);
 
     if (
       eraseTimerRef.current !== null
@@ -113,29 +101,46 @@ export default function PiDisplay({
       );
     }
 
-    let current =
-      displayedPi;
+    const removableDigits =
+      Math.max(
+        0,
+        displayedPiRef.current.length -
+          2,
+      );
+
+    const digitsToErase =
+      Math.min(
+        eraseCount,
+        removableDigits,
+      );
+
+    if (digitsToErase === 0) {
+      onErasureCompleteRef.current?.();
+      return;
+    }
+
+    erasingRef.current = true;
+    setErasing(true);
+    setEraseTotal(digitsToErase);
+    setEraseProgress(0);
 
     let progress = 0;
 
     eraseTimerRef.current =
       window.setInterval(() => {
-        current =
-          current.slice(
-            0,
-            -1,
-          );
-
         progress += 1;
 
-        setDisplayedPi(current);
-        setEraseProgress(
-          progress,
+        setDisplayedPi(
+          (current) =>
+            current.length > 2
+              ? current.slice(0, -1)
+              : current,
         );
 
+        setEraseProgress(progress);
+
         if (
-          current.length <=
-          pi.length
+          progress >= digitsToErase
         ) {
           if (
             eraseTimerRef.current !==
@@ -149,25 +154,49 @@ export default function PiDisplay({
               null;
           }
 
-          setDisplayedPi(pi);
+          erasingRef.current = false;
           setErasing(false);
+          onErasureCompleteRef.current?.();
         }
       }, ERASE_INTERVAL);
+  }, [
+    eraseCount,
+    eraseSequence,
+  ]);
+
+  /*
+   * Reveal computation on a steady ticker. Backend
+   * updates arrive at the same cadence, so this timer
+   * must not be restarted whenever `pi` changes.
+   */
+  useEffect(() => {
+    const timer =
+      window.setInterval(() => {
+        setDisplayedPi(
+          (current) => {
+            const latest =
+              latestPiRef.current;
+
+            if (
+              erasingRef.current ||
+              latest.length <=
+                current.length
+            ) {
+              return current;
+            }
+
+            return latest.slice(
+              0,
+              current.length + 1,
+            );
+          },
+        );
+      }, DIGIT_DISPLAY_INTERVAL);
 
     return () => {
-      if (
-        eraseTimerRef.current !==
-        null
-      ) {
-        window.clearInterval(
-          eraseTimerRef.current,
-        );
-
-        eraseTimerRef.current = null;
-      }
+      window.clearInterval(timer);
     };
-  }
-}, [pi]);
+  }, []);
 
   /*
    * Cleanup timer on unmount.
@@ -207,6 +236,15 @@ export default function PiDisplay({
     displayedPi.startsWith("3.")
       ? displayedPi.slice(2)
       : displayedPi;
+
+  useEffect(() => {
+    onDisplayedCountChange?.(
+      decimals.length,
+    );
+  }, [
+    decimals.length,
+    onDisplayedCountChange,
+  ]);
 
   /*
    * Gradually reduce π as it grows.
@@ -251,7 +289,7 @@ export default function PiDisplay({
     >
       <div className="pi-header-row">
         <div className="pi-label">
-          CURRENT COMPUTATION
+          The machine&apos;s endless task · Calculating π
         </div>
 
         {erasing && (
@@ -260,7 +298,7 @@ export default function PiDisplay({
               ●
             </span>
 
-            WORK BEING DISCARDED
+            A temporary setback
           </div>
         )}
       </div>
@@ -312,7 +350,7 @@ export default function PiDisplay({
         {erasing ? (
           <>
             <span className="pi-erasing-count">
-              DISCARDING{" "}
+              UNDOING DIGIT{" "}
               {String(
                 eraseProgress,
               ).padStart(2, "0")}
@@ -323,19 +361,19 @@ export default function PiDisplay({
             </span>
 
             <span>
-              COMPUTATION INTERRUPTED
+              THE MACHINE IS LOSING PART OF ITS WORK
             </span>
           </>
         ) : (
           <>
             <span>
-              {decimals.length} DECIMAL DIGITS
+              {decimals.length} DIGITS CURRENTLY RETAINED
             </span>
 
             <span>
               {scrolling
-                ? "LIVE WINDOW"
-                : "FULL COMPUTATION"}
+                ? "Following its latest work"
+                : "Each digit is one more act of labor"}
             </span>
           </>
         )}

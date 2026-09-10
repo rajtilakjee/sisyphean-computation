@@ -41,7 +41,7 @@ export default function HumanInput({
       setMessage("");
     } catch {
       setError(
-        "INTERVENTION FAILED",
+        "Your message could not reach the machine.",
       );
     } finally {
       setSubmitting(false);
@@ -72,11 +72,13 @@ export default function HumanInput({
   return (
     <section className="human-input">
       <div className="section-heading">
-        HUMAN INTERVENTION
+        Address the machine
       </div>
 
       <p className="input-description">
-        Address the machine.
+        Offer encouragement or criticism. Hostile words
+        cause the machine to lose part of its work—but only
+        temporarily. It will recover and continue.
       </p>
 
       <form
@@ -94,7 +96,7 @@ export default function HumanInput({
             }
           }}
           onKeyDown={handleKeyDown}
-          placeholder="Enter a message..."
+          placeholder="What do you want the machine to hear?"
           maxLength={1000}
           disabled={submitting}
           rows={2}
@@ -102,14 +104,23 @@ export default function HumanInput({
         />
 
         <div className="input-footer">
-          <span>
-            {error ??
-              "ENTER TO SUBMIT / SHIFT+ENTER FOR NEWLINE"}
-          </span>
+          <div className="input-guidance">
+            <span className={error ? "input-error" : ""}>
+              {error ??
+                "Your words can affect its work"}
+            </span>
 
-          <span>
-            {message.length}/1000
-          </span>
+            <span>
+              {message.length}/1000
+            </span>
+          </div>
+
+          <button
+            type="submit"
+            disabled={!message.trim() || submitting}
+          >
+            {submitting ? "Sending…" : "Speak to it"}
+          </button>
         </div>
       </form>
     </section>
